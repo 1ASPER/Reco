@@ -1,4 +1,10 @@
+venv/
+env/
+myenv/
+__pycache__/
+
 *.pkl
 *.csv
 *.json
 
+*.log
