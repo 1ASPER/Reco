@@ -13,7 +13,7 @@ def get_recommendations(item_id, n=5):
     except KeyError:
         return []
 
-def recommend_complementary_items(current_cart, n=1) -> int:
+def recommend_complementary_items(current_cart, n=5) -> int:
     all_recommendations = []
     
     for item in current_cart:
@@ -23,4 +23,9 @@ def recommend_complementary_items(current_cart, n=1) -> int:
     recommendation_counts = pd.Series(all_recommendations).value_counts()
     recommendation_counts = recommendation_counts.drop(current_cart, errors='ignore')
     
-    return recommendation_counts.head(n).index.tolist()[0]
+    reco_list = recommendation_counts.head(n).index.tolist()
+
+    if reco_list:
+        return reco_list[0]
+    else:
+        return None
