@@ -1,5 +1,7 @@
+# app/api/endpoints.py
+
 from fastapi import APIRouter, Request
-from app.services.recommender import recommend_complementary_items
+from app.services.recommender import recommend_complementary_items_by_name
 
 router = APIRouter()
 
@@ -8,10 +10,12 @@ async def recommend(request: Request):
     data = await request.json()
     cart = data.get("cart", [])
 
-    # Проверка: cart должен быть списком целых чисел
-    if not isinstance(cart, list) or not all(isinstance(i, int) for i in cart):
-        return {"error": "Invalid cart format. Expected list of integers."}
+    if not isinstance(cart, list):
+        return {"error": "cart must be a list of products"}
 
-    recommendation = recommend_complementary_items(cart, n=5)
+    # Извлекаем названия товаров
+    product_names = [item.get("Товар") for item in cart if "Товар" in item]
+
+    recommendation = recommend_complementary_items_by_name(product_names)
 
     return {"recommendation": recommendation}
