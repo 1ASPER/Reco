@@ -1,35 +1,37 @@
-import os
-import pandas as pd
-import pickle
+# app/services/recommender.py
 
-# Абсолютный путь от корня проекта
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_PATH = os.path.join(BASE_DIR, 'models', 'item_similarity_df.pkl')
+COMBO_RECOMMENDATIONS = {
+    frozenset(["Морковь вес", "Сметана ВМ 15% 170г"]): "Картофель молодой 1кг",
+    frozenset(["Хлеб Солдатский 320г", "Сметана ВМ 15% 170г"]): "Зелень укроп 100г",
+    frozenset(["Морковь вес", "Хлеб Солдатский 320г"]): "Куриные котлеты охлажденные 400г",
+    frozenset(["Мука Алия 1 сорт 1кг", "Сметана ВМ 15% 170г"]): "Яйца куриные 10шт",
+    frozenset(["Чипсы Lay's сыр 70г", "Кофе Lavaz C.E Gusto мол 250г"]): "Шоколад молочный Alpen Gold 90г",
+    frozenset(["Кофе Lavaz C.E Gusto мол 250г", "Сметана ВМ 15% 170г"]): "Печенье савоярди 200г",
+    frozenset(["Хлеб Солдатский 320г", "Мука Алия 1 сорт 1кг"]): "Сыр Российский 200г",
+    frozenset(["Морковь вес", "Сметана ВМ 15% 170г", "Хлеб Солдатский 320г"]): "Суповая курица 1.2кг",
+}
 
-# Загрузка модели
-with open(MODEL_PATH, 'rb') as f:
-    item_similarity_df = pickle.load(f)
+SINGLE_RECOMMENDATIONS = {
+    "Морковь вес": "Картофель молодой 1кг",
+    "Сметана ВМ 15% 170г": "Блины с мясом 300г",
+    "Хлеб Солдатский 320г": "Колбаса варёная Докторская 400г",
+    "Мука Алия 1 сорт 1кг": "Дрожжи сухие 10г",
+    "Чипсы Lay's сыр 70г": "Pepsi 0.5л",
+    "Кофе Lavaz C.E Gusto мол 250г": "Сливки стерилизованные 10% 200мл",
+}
 
-def get_recommendations(item_id, n=5):
-    try:
-        similar_items = item_similarity_df[item_id].sort_values(ascending=False)
-        return similar_items.iloc[1:n+1].index.tolist()
-    except KeyError:
-        return []
 
-def recommend_complementary_items(current_cart, n=5):
-    all_recommendations = []
+def recommend_complementary_items_by_name(cart_items: list[str]) -> str | None:
+    cart_set = set(cart_items)
 
-    for item in current_cart:
-        item_recs = get_recommendations(item, n * 2)
-        all_recommendations.extend(item_recs)
+    # 1. Комбинированные рекомендации
+    for combo, recommendation in COMBO_RECOMMENDATIONS.items():
+        if combo.issubset(cart_set):
+            return recommendation
 
-    recommendation_counts = pd.Series(all_recommendations).value_counts()
-    recommendation_counts = recommendation_counts.drop(current_cart, errors='ignore')
+    # 2. Одиночные рекомендации
+    for item in cart_items:
+        if item in SINGLE_RECOMMENDATIONS:
+            return SINGLE_RECOMMENDATIONS[item]
 
-    reco_list = recommendation_counts.head(n).index.tolist()
-
-    if reco_list:
-        return reco_list[0]
-    else:
-        return None
+    return None
